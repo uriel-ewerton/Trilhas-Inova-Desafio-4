@@ -1,16 +1,24 @@
 const nomeCidade = localStorage.getItem("nomeCidade");
 let botoesAtivados = false;
-let abas = document.querySelectorAll(".aba");
+let abas = [];
 
-// Função para buscar dados do backend (Netlify Functions)
+// Função para buscar dados do backend
 async function fetchSecao(type) {
-  const cidade = encodeURIComponent(localStorage.getItem("nomeCidade"));
-  const res = await fetch(`/.netlify/functions/getHealthData?type=postos&cidade=${encodeURIComponent(nomeCidade)}`);
-  if (!res.ok) throw new Error(`Erro ao buscar dados: ${res.statusText}`);
-  return await res.json();
+  try {
+    const cidade = encodeURIComponent(nomeCidade);
+    const res = await fetch(`/.netlify/functions/getHealthData?type=${type}&cidade=${cidade}`);
+    
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Erro no fetchSecao:", error);
+    return [];
+  }
 }
 
-// Definição das seções de Saúde (render permanece igual)
+// Seções de Saúde corrigidas
 const secoesSaude = {
   postos: {
     container: document.getElementById("postosMenu"),
@@ -61,69 +69,75 @@ const secoesSaude = {
   }
 };
 
-// Seções estáticas para Educação, Emergência e outros (mantém a estrutura original)
-const secoesEducacao = {};
-const secoesEmergencia = {};
-const secoesAssitenciaSocial = {};
-const secoesServicosPrefeitura = {};
-
-// Adiciona eventos de clique nas abas
+// Função para adicionar eventos corrigida
 function addClick(secoes) {
   abas = document.querySelectorAll(".aba");
+  if (!abas.length) {
+    console.error("Nenhuma aba encontrada!");
+    return;
+  }
+
   abas.forEach(aba => {
-    aba.addEventListener("click", () => {
-      trocarAba(aba.id, secoes);
-    });
+    aba.addEventListener("click", () => trocarAba(aba.id, secoes));
   });
 }
 
-// Troca a aba ativa e carrega dados (dinâmicos para Saúde)
+// Função trocarAba corrigida
 async function trocarAba(abaID, secoes) {
-  // Marca aba ativa
-  abas.forEach(aba => aba.classList.remove("ativa"));
-  document.getElementById(abaID).classList.add("ativa");
+  try {
+    // Verificação de segurança
+    if (!secoes[abaID]?.container) {
+      console.error(`Seção ${abaID} não encontrada!`);
+      return;
+    }
 
-  // Esconde todas as seções
-  for (const key in secoes) {
-    secoes[key].container.classList.add("hidden");
+    // Atualização das classes
+    abas.forEach(aba => aba.classList.remove("ativa"));
+    const abaAtiva = document.getElementById(abaID);
+    if (abaAtiva) abaAtiva.classList.add("ativa");
+
+    // Manipulação dos containers
+    Object.values(secoes).forEach(secao => {
+      if (secao.container) {
+        secao.container.classList.add("hidden");
+        secao.container.innerHTML = "";
+      }
+    });
+
+    const secao = secoes[abaID];
+    secao.container.classList.remove("hidden");
+
+    // Carregar dados
+    const items = secoes === secoesSaude 
+      ? await fetchSecao(abaID)
+      : secao.dados || [];
+
+    // Renderização
+    items.forEach(item => {
+      secao.container.innerHTML += secao.render(item);
+    });
+
+    botoesDosCartoes();
+  } catch (error) {
+    console.error("Erro na troca de aba:", error);
   }
-
-  // Mostra a seção selecionada
-  const secao = secoes[abaID];
-  secao.container.classList.remove("hidden");
-
-  // Limpa conteúdo antigo
-  secao.container.innerHTML = "";
-
-  // Obtém dados (fetch para Saúde ou dados estáticos)
-  let items = [];
-  if (secoes === secoesSaude) {
-    items = await fetchSecao(abaID);
-  } else if (secao.dados) {
-    items = secao.dados;
-  }
-
-  // Renderiza cartões
-  items.forEach(item => {
-    secao.container.innerHTML += secao.render(item);
-  });
-
-  // Ativa botões
-  botoesAtivados = false;
-  botoesDosCartoes();
 }
 
-// Prepara ambiente ao entrar na página certa
+// Função preparaAmbiente atualizada
 function preparaAmbiente() {
-  if (window.location.href.includes("PaginaSaude.html")) {
+  const path = window.location.pathname;
+  
+  if (path.includes("PaginaSaude.html")) {
     addClick(secoesSaude);
     trocarAba("postos", secoesSaude);
-  } else if (window.location.href.includes("Educacao.html")) {
+  } else if (path.includes("Educacao.html")) {
     addClick(secoesEducacao);
     trocarAba("matriculas", secoesEducacao);
-  } else {
+  } else if (path.includes("Emergencia.html")) {
     addClick(secoesEmergencia);
     trocarAba("telefones", secoesEmergencia);
+  } else {
+    console.warn("Ambiente não reconhecido:", path);
   }
 }
 
