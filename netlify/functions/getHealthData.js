@@ -14,6 +14,10 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 400,
       body: JSON.stringify({ error: "type e cidade são obrigatórios" }),
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*" // Permite CORS
+      }
     };
   }
 
@@ -35,6 +39,10 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 404,
         body: JSON.stringify({ error: `Seção '${type}' não encontrada.` }),
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*" // Permite CORS
+        }
       };
     }
 
@@ -43,7 +51,10 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*" // Permite CORS
+      },
       body: JSON.stringify(items),
     };
 
@@ -52,6 +63,10 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*" // Permite CORS
+      }
     };
   }
 };
