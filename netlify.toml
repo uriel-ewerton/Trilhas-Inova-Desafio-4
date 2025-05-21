@@ -1,11 +1,9 @@
-# netlify.toml
 [build]
-  # não declare 'command' quando não há build
-  publish   = "."                        # publica a raiz
-  functions = "netlify/functions"        # pasta das Netlify Functions
+  publish   = "."
+  functions = "netlify/functions"
 
 [[redirects]]
-  from   = "/"                           # raiz do site
-  to     = "/BemVindo.html"              # página inicial
+  from   = "/"                # Só a raiz
+  to     = "/BemVindo.html"
   status = 200
   force  = true

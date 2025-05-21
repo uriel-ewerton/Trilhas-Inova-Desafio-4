@@ -1,42 +1,48 @@
 // netlify/functions/getHealthData.js
 const { MongoClient } = require("mongodb");
-let clientPromise = null;
+let cachedClient = null;
 
 const uri    = process.env.MONGODB_URI;
-const dbName = process.env.DB_NAME || "informa_cidadao";     // <- aqui
+const dbName = process.env.DB_NAME || "informa_cidadao";
 
-if (!uri) throw new Error("MONGODB_URI não está definido");
+if (!uri) {
+  throw new Error("MONGODB_URI não está definido");
+}
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
+  context.callbackWaitsForEmptyEventLoop = false;
   try {
-    if (!clientPromise) {
-      clientPromise = MongoClient.connect(uri);
+    // Reaproveita conexão entre invocações
+    if (!cachedClient) {
+      cachedClient = await MongoClient.connect(uri, {
+        // timeout de 5s para não apostar 10s inteiro
+        connectTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 5000,
+      });
     }
-    const client = await clientPromise;
-    const db     = client.db(dbName);                         // <- usar dbName
-    const coll   = db.collection("saude");
+    const db   = cachedClient.db(dbName);
+    const coll = db.collection("saude");
 
     const { type, cidade } = event.queryStringParameters || {};
     if (!type || !cidade) {
       return { statusCode: 400, body: JSON.stringify({ error: "type e cidade são obrigatórios" }) };
     }
 
-    // Continua como antes: traz o único doc-container
-    const config = await coll.findOne({});
+    // Puxa apenas o documento da cidade (caso você tenha migrate para container por cidade)
+    const config = await coll.findOne({ cidade }, { projection: { [type]: 1, _id: 0 } });
     if (!config || !Array.isArray(config[type])) {
-      return { statusCode: 404, body: JSON.stringify({ error: `Seção '${type}' não encontrada` }) };
+      return { statusCode: 404, body: JSON.stringify({ error: `Seção '${type}' não encontrada para ${cidade}` }) };
     }
 
-    // Filtra pelo campo cidade dentro do array
-    const items = config[type].filter(item => item.cidade === cidade);
-
+    // Retorna diretamente o array (já isolado por cidade)
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(items),
+      body: JSON.stringify(config[type]),
     };
+
   } catch (err) {
-    console.error("Erro em getHealthData:", err);
+    console.error("Erro na getHealthData:", err);
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
