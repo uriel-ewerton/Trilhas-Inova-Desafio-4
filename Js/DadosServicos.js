@@ -15,9 +15,20 @@ document.addEventListener('DOMContentLoaded', function() {
   
   let botoesAtivados = false;
   
-  // Função para buscar dados do backend (Netlify Functions)
+  // Função para buscar dados do backend com cache no sessionStorage
   async function fetchSecao(type) {
-    console.log(`Buscando dados para seção: ${type}, cidade: ${nomeCidade}`);
+    console.log(`Verificando dados para seção: ${type}, cidade: ${nomeCidade}`);
+    
+    // Verifica se já existe no cache da sessão
+    const cacheKey = `saude_${type}_${nomeCidade}`;
+    const cachedData = sessionStorage.getItem(cacheKey);
+    
+    if (cachedData) {
+      console.log(`Usando dados em cache para ${type}`);
+      return JSON.parse(cachedData);
+    }
+    
+    console.log(`Buscando dados da API para seção: ${type}, cidade: ${nomeCidade}`);
     try {
       // Determina o caminho correto da API baseado no ambiente
       const apiPath = window.location.hostname.includes('netlify.app') 
@@ -36,71 +47,17 @@ document.addEventListener('DOMContentLoaded', function() {
       
       const data = await res.json();
       console.log(`Dados recebidos para ${type}:`, data);
+      
+      // Salva no cache da sessão
+      sessionStorage.setItem(cacheKey, JSON.stringify(data));
+      
       return data;
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
-      // Retorna array vazio em caso de erro para evitar quebra do código
-      return [];
+      // Retorna null em caso de erro para mostrar mensagem
+      return null;
     }
   }
-
-  // Dados de exemplo para usar quando a API falhar
-  const dadosExemplo = {
-    postos: [
-      {
-        nome: "",
-        horario: "",
-        documentos: "",
-        telefone: "(98) 3000-0000",
-        endereco: "Av. Principal, 123",
-        cidade: nomeCidade
-      },
-      {
-        nome: "Posto de Saúde Bairro Novo",
-        horario: "Segunda a Sexta, 7h às 16h",
-        documentos: "RG, CPF e Cartão SUS",
-        telefone: "(98) 3000-0001",
-        endereco: "Rua das Flores, 456",
-        cidade: nomeCidade
-      }
-    ],
-    upas: [
-      {
-        nome: "UPA 24h Centro",
-        horario: "Todos os dias, 24h",
-        documentos: "RG, CPF e Cartão SUS",
-        telefone: "(98) 3000-1000",
-        endereco: "Av. Central, 789",
-        cidade: nomeCidade
-      },
-      {
-        nome: "UPA 24h Zona Norte",
-        horario: "Todos os dias, 24h",
-        documentos: "RG, CPF e Cartão SUS",
-        telefone: "(98) 3000-1001",
-        endereco: "Av. Norte, 321",
-        cidade: nomeCidade
-      }
-    ],
-    campanhas: [
-      {
-        titulo: "Vacinação contra Gripe",
-        horario: "8h às 17h",
-        periodo: "01/05 a 30/06",
-        documentos: "RG, CPF e Cartão SUS",
-        locais: "Todos os postos de saúde",
-        cidade: nomeCidade
-      },
-      {
-        titulo: "Prevenção da Dengue",
-        horario: "8h às 16h",
-        periodo: "Todo o ano",
-        documentos: "Não necessário",
-        locais: "Centros comunitários",
-        cidade: nomeCidade
-      }
-    ]
-  };
 
   // Definição das seções de Saúde
   const secoesSaude = {
@@ -223,30 +180,37 @@ document.addEventListener('DOMContentLoaded', function() {
     secao.container.classList.remove("hidden");
 
     // Limpa conteúdo antigo
-    secao.container.innerHTML = '<p>Carregando dados...</p>';
+    secao.container.innerHTML = '<p class="carregando">Carregando dados...</p>';
 
     // Obtém dados (fetch para Saúde ou dados estáticos)
-    let items = [];
     try {
-      // Tenta buscar dados da API
-      items = await fetchSecao(abaID);
+      // Tenta buscar dados da API (com cache)
+      const items = await fetchSecao(abaID);
       
-      // Se não houver dados ou ocorrer erro, usa dados de exemplo
-      if (!items || items.length === 0) {
-        console.log("Usando dados de exemplo para", abaID);
-        items = dadosExemplo[abaID] || [];
-      }
-
       // Limpa o container antes de renderizar
       secao.container.innerHTML = "";
       
-      // Renderiza cartões
+      // Renderiza cartões ou mensagem de erro
       if (items && items.length > 0) {
         items.forEach(item => {
           secao.container.innerHTML += secao.render(item);
         });
+      } else if (items === null) {
+        // Caso de erro na API
+        secao.container.innerHTML = `
+          <div class="mensagem-erro">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>Não foi possível carregar os dados. Por favor, tente novamente mais tarde.</p>
+          </div>
+        `;
       } else {
-        secao.container.innerHTML = '<p class="sem-dados">Nenhum dado disponível para esta seção.</p>';
+        // Caso de array vazio
+        secao.container.innerHTML = `
+          <div class="mensagem-vazio">
+            <i class="fas fa-info-circle"></i>
+            <p>Não há dados disponíveis para ${abaID} em ${nomeCidade}.</p>
+          </div>
+        `;
       }
 
       // Ativa botões
@@ -255,17 +219,12 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
       console.error(`Erro ao carregar dados para ${abaID}:`, error);
       
-      // Usa dados de exemplo em caso de erro
-      secao.container.innerHTML = "";
-      if (dadosExemplo[abaID]) {
-        items = dadosExemplo[abaID];
-        items.forEach(item => {
-          secao.container.innerHTML += secao.render(item);
-        });
-        botoesDosCartoes();
-      } else {
-        secao.container.innerHTML = '<p class="erro">Erro ao carregar dados. Usando dados de exemplo.</p>';
-      }
+      secao.container.innerHTML = `
+        <div class="mensagem-erro">
+          <i class="fas fa-exclamation-circle"></i>
+          <p>Ocorreu um erro ao processar os dados. Por favor, tente novamente mais tarde.</p>
+        </div>
+      `;
     }
   }
 
@@ -323,6 +282,17 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // Função para limpar o cache (útil para testes)
+  window.limparCache = function() {
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('saude_')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+    console.log("Cache de dados de saúde limpo");
+    alert("Cache limpo. Recarregue a página para buscar novos dados.");
+  };
 
   // Inicialização com pequeno atraso para garantir que todos os elementos estejam carregados
   console.log("Iniciando com pequeno atraso...");
