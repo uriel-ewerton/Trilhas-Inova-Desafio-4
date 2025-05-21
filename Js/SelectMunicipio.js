@@ -13,7 +13,7 @@ usarCidade.addEventListener("click", () => {
     } else {
         localStorage.setItem("valorSelect", select.value);
         localStorage.setItem("nomeCidade", select.options[select.selectedIndex].text);
-        window.location.href = "Index.html";
+        window.location.href = "index.html";
     }
 });
 
