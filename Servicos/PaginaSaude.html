@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Info | Cidadão</title>
+  <link rel="stylesheet" href="../Styles/Style.css"/>
+  <!-- Local Icone-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <!-- cabeçalho das páginas-->
+    <div id="cabecalhoDiv" class="">
+      <header class="cabecalho">
+        <img src="../IMG/Logo.png" alt="Logo InforMA" class="logo">
+        <p>App<br><strong>InforMA | Cidadão</strong></p>
+        <img src="../IMG/Rectangle.png" alt="Barra de separação" class="cabecalho-barra">
+        <p>Cidade:<br><strong class="nome-cidade">nome</strong></p>
+      </header>
+    </div>
+
+    <div id="servicos">
+      <!-- Tela serviço de Saúde-->
+      <div id="servicoSaude" class="">
+        <h2 class="titulo-servicos">Serviços de <span class="azul">Saúde</span></h2>
+
+        <div class="abas">
+          <button id="postos" class="aba ativa">Postos</button>
+          <button id="upas" class="aba">UPAs</button>
+          <button id="campanhas" class="aba">Campanhas</button>
+        </div>
+        
+        <div id="postosMenu" class="secao-cartoes"></div>
+        <div id="upasMenu" class="secao-cartoes hidden"></div>
+        <div id="campanhasMenu" class="secao-cartoes hidden"></div>
+      </div>
+    </div>
+
+    <!-- vai para SelectMunicipio.html-->
+    <div id="house" class="house">
+      <button class=" " onclick="redirecionarPara('../index.html')"><i class="fas fa-home"></i></button>
+    </div>
+  </div>
+
+  <script src="../Js/DadosServicos.js"></script>
+  <script src="../Js/Script.js"></script>
+</body>
+
+</html>

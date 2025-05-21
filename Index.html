@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InforMA | Cidadão</title>
+  <link rel="stylesheet" href="Styles/Style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="../Js/Script.js" defer></script>
+
+</head>
+
+<body>
+  <div class="container">
+    <!-- cabeçalho das páginas-->
+    <div id="cabecalhoDiv" class="">
+      <header class="cabecalho">
+        <img src="IMG/Logo.png" alt="Logo InforMA" class="logo">
+        <p>App<br><strong>InforMA | Cidadão</strong></p>
+        <img src="IMG/Rectangle.png" alt="Barra de separação" class="cabecalho-barra">
+        <p>Cidade:<br><strong class="nome-cidade">nome</strong></p>
+      </header>
+    </div>
+
+    <!-- Tela três selecionar o serviço-->
+    <div id="telaDois" class="">
+
+      <h2 class="titulo-servicos">Serviços em <strong class="nome-cidade">Cidade nome</strong></span></h2>
+
+      <div class="campo-busca">
+        <input type="text" id="busca" placeholder="Buscar palavra-chave">
+        <i class="fas fa-search"></i>
+      </div>
+
+      <div class="grade-servicos">
+
+        <!-- vai para PaginaSaude.html-->
+        <button class="botao-servico" onclick="redirecionarPara('Servicos/PaginaSaude.html')"> <i
+            class="fas fa-notes-medical fa-lg"></i><br>Saúde</button>
+        <!-- vai para Educação.html-->
+        <button class="botao-servico" onclick="redirecionarPara('Servicos/Educacao.html')"><i
+            class="fas fa-book fa-lg"></i><br>Educação</button>
+        <!-- botão deve adcionar hidden na div(id=telaDois) e tirar o da div(id=servicoEmergencia)-->
+        <button class="botao-servico" onclick="redirecionarPara('Servicos/Emergencia.html')"> <i
+            class="fas fa-exclamation-triangle fa-lg"></i><br>Emergência</button>
+        <!-- botão deve adcionar hidden na div(id=telaDois) e tirar o da div(id=servicoSocial)-->
+        <button class="botao-servico"><i class="fas fa-hands-helping fa-lg"></i><br>Assistência Social</button>
+        <!-- botão deve adcionar hidden na div(id=telaDois) e tirar o da div(id=servicoPrefeitura)-->
+        <button class="botao-servico"><i class="fas fa-landmark fa-lg"></i><br>Serviços da Prefeitura</button>
+        <!-- botão deve adcionar hidden na div(id=telaDois) e tirar o da div(id=servicoMapa)-->
+        <button class="botao-servico"><i class="fas fa-map-marked-alt fa-lg"></i><br>Mapa da Cidade</button>
+      </div>
+
+    </div>
+    <!-- vai para Noticias.html-->
+    <button class="botao-noticias">Ver Notícias</button>
+
+    <!-- vai para SelectMunicipio.html-->
+    <div id="house" class="house">
+      <button onclick="redirecionarPara('SelectMunicipio.html')"><i class="fas fa-home"></i></button>
+    </div>
+  </div>
+
+</body>
+
+</html>
