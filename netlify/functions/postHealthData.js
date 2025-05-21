@@ -1,11 +1,11 @@
 // netlify/functions/postHealthData.js
 const { MongoClient } = require("mongodb");
 
-let clientPromise;
+let clientPromise = null;
 const uri = process.env.MONGODB_URI;
-if (!uri) throw new Error("MONGODB_URI não está definido");
+const dbName = process.env.DB_NAME || "informa_cidadao";
 
-clientPromise = MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+if (!uri) throw new Error("MONGODB_URI não está definido");
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -13,26 +13,27 @@ exports.handler = async (event) => {
   }
 
   try {
+    if (!clientPromise) {
+      clientPromise = MongoClient.connect(uri);
+    }
     const client = await clientPromise;
-    const db = client.db("informa_cidadao");
-    const collection = db.collection("saude");
+    const db = client.db(dbName);
 
-    const payload = JSON.parse(event.body);
-    // payload deve ter: { cidade, tipo, dados: { nome, horario, documentos, telefone, endereco, ... } }
-    const doc = {
-      cidade: payload.cidade,
-      tipo: payload.tipo,
-      ...payload.dados,
-    };
+    const { tipo, cidade, dados } = JSON.parse(event.body);
+    if (!tipo || !cidade || !dados) {
+      return { statusCode: 400, body: JSON.stringify({ error: "payload inválido" }) };
+    }
 
-    const res = await collection.insertOne(doc);
+    console.log(`Inserindo em saude:`, { tipo, cidade, dados });
+    const result = await db.collection("saude").insertOne({ tipo, cidade, ...dados });
 
     return {
       statusCode: 201,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ insertedId: res.insertedId }),
+      body: JSON.stringify({ insertedId: result.insertedId }),
     };
   } catch (err) {
-    return { statusCode: 500, body: err.toString() };
+    console.error("Erro em postHealthData:", err);
+    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };

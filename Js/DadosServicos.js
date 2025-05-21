@@ -5,7 +5,7 @@ let abas = document.querySelectorAll(".aba");
 // Função para buscar dados do backend (Netlify Functions)
 async function fetchSecao(type) {
   const cidade = encodeURIComponent(localStorage.getItem("nomeCidade"));
-  const res = await fetch(`/.netlify/functions/getHealthData?type=${type}&cidade=${cidade}`);
+  const res = await fetch(`/.netlify/functions/getHealthData?type=postos&cidade=${encodeURIComponent(nomeCidade)}`);
   if (!res.ok) throw new Error(`Erro ao buscar dados: ${res.statusText}`);
   return await res.json();
 }
