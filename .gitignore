@@ -1,2 +1,8 @@
-# Local Netlify folder
-.netlify
+# Node
+node_modules/
+
+# Netlify local cache
+.netlify/
+
+# Credenciais e variáveis de ambiente
+.env
