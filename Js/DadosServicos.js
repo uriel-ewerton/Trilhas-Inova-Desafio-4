@@ -48,9 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const dadosExemplo = {
     postos: [
       {
-        nome: "Posto de Saúde Central",
-        horario: "Segunda a Sexta, 8h às 17h",
-        documentos: "RG, CPF e Cartão SUS",
+        nome: "",
+        horario: "",
+        documentos: "",
         telefone: "(98) 3000-0000",
         endereco: "Av. Principal, 123",
         cidade: nomeCidade
