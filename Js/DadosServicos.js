@@ -2,48 +2,18 @@ const nomeCidade = localStorage.getItem("nomeCidade");
 let botoesAtivados = false;
 let abas = document.querySelectorAll(".aba");
 
-// Os objetos de uma secao devem ter o mesmo nome que a id da sua respectiva aba
+// Função para buscar dados do backend (Netlify Functions)
+async function fetchSecao(type) {
+  const cidade = encodeURIComponent(localStorage.getItem("nomeCidade"));
+  const res = await fetch(`/.netlify/functions/getHealthData?type=${type}&cidade=${cidade}`);
+  if (!res.ok) throw new Error(`Erro ao buscar dados: ${res.statusText}`);
+  return await res.json();
+}
 
+// Definição das seções de Saúde (render permanece igual)
 const secoesSaude = {
   postos: {
     container: document.getElementById("postosMenu"),
-    dados: [
-      {
-        nome: "Posto de Saúde João Paulo II",
-        horario: "07h às 17h, de segunda a sexta",
-        documentos: "RG e Cartão SUS",
-        telefone: "(99) 90000-000",
-        endereco: "Rua das Flores, nº 100 - Centro"
-      },
-      {
-        nome: "Posto de Saúde Santa Ana",
-        horario: "07h às 17h, de segunda a sexta",
-        documentos: "RG e Cartão SUS",
-        telefone: "(99) 91111-111",
-        endereco: "Rua do Limoeiro, nº 32 - Goiás"
-      },
-      {
-        nome: "Posto de Saúde Santa Ana",
-        horario: "07h às 17h, de segunda a sexta",
-        documentos: "RG e Cartão SUS",
-        telefone: "(99) 91111-111",
-        endereco: "Rua do Limoeiro, nº 32 - Goiás"
-      },
-      {
-        nome: "Posto de Saúde Santa Ana",
-        horario: "07h às 17h, de segunda a sexta",
-        documentos: "RG e Cartão SUS",
-        telefone: "(99) 91111-111",
-        endereco: "Rua do Limoeiro, nº 32 - Goiás"
-      },
-      {
-        nome: "Posto de Saúde Santa Ana",
-        horario: "07h às 17h, de segunda a sexta",
-        documentos: "RG e Cartão SUS",
-        telefone: "(99) 91111-111",
-        endereco: "Rua do Limoeiro, nº 32 - Goiás"
-      }
-    ],
     render: posto => `
       <div class="cartao">
         <h3>${posto.nome}</h3>
@@ -60,22 +30,6 @@ const secoesSaude = {
   },
   upas: {
     container: document.getElementById("upasMenu"),
-    dados: [
-      {
-        nome: "UPA Cidade Operária",
-        horario: "24h por dia, todo dia",
-        documentos: "Nenhum é necessário",
-        telefone: "(99) 98000-000",
-        endereco: "Rua dos Golfos, nº 82 - Centro"
-      },
-      {
-        nome: "UPA São João",
-        horario: "24h por dia, todo dia",
-        documentos: "Nenhum é necessário",
-        telefone: "(99) 91111-111",
-        endereco: "Rua Santa, nº 32 - Goiás"
-      }
-    ],
     render: upa => `
       <div class="cartao">
         <h3>${upa.nome}</h3>
@@ -92,22 +46,6 @@ const secoesSaude = {
   },
   campanhas: {
     container: document.getElementById("campanhasMenu"),
-    dados: [
-      {
-        titulo: "Vacinação Contra Gripe (Influenza)",
-        horario: "Sem dados",
-        periodo: "Sem dados",
-        documentos: "RG, Cartão SUS e Comprovante de Residência",
-        locais: "Postos de saúde municipais"
-      },
-      {
-        titulo: "Vacinação Infantil Contra Poliomielite",
-        horario: "Sem dados",
-        periodo: "10 a 20 de maio",
-        documentos: "Cartão de Vacinação da Criança e RG do responsável",
-        locais: "UBS da Cohama, Anjo da Guarda e Vinhais"
-      }
-    ],
     render: campanha => `
       <div class="cartao">
         <h3>${campanha.titulo}</h3>
@@ -123,16 +61,13 @@ const secoesSaude = {
   }
 };
 
+// Seções estáticas para Educação, Emergência e outros (mantém a estrutura original)
 const secoesEducacao = {};
-
 const secoesEmergencia = {};
-
 const secoesAssitenciaSocial = {};
-
 const secoesServicosPrefeitura = {};
 
-
-// Adiciona o click nas abas dos servicos (o parametro secoes é pra identificar o tipo de serviço (saude, educacao, etc))
+// Adiciona eventos de clique nas abas
 function addClick(secoes) {
   abas = document.querySelectorAll(".aba");
   abas.forEach(aba => {
@@ -142,35 +77,43 @@ function addClick(secoes) {
   });
 }
 
-// Função que troca as abas e renderiza os cartões dos serviços
-function trocarAba(abaID, secoes) {
-  // Remove a classe ativa de todas as abas e adiciona na aba atual
+// Troca a aba ativa e carrega dados (dinâmicos para Saúde)
+async function trocarAba(abaID, secoes) {
+  // Marca aba ativa
   abas.forEach(aba => aba.classList.remove("ativa"));
   document.getElementById(abaID).classList.add("ativa");
 
-  // Poe a classe hidden em todas as seções
-  for (const i in secoes) {
-    secoes[i].container.classList.add("hidden");
+  // Esconde todas as seções
+  for (const key in secoes) {
+    secoes[key].container.classList.add("hidden");
   }
 
-  // Mostra a aba atual. Secoes[id] pode ser secoes.posto, secoes.upa, etc
+  // Mostra a seção selecionada
   const secao = secoes[abaID];
   secao.container.classList.remove("hidden");
 
-  // Carrega os cartões (se ainda não tiver)
-  if (secao.container.innerHTML.trim() === "") {
-    secao.dados.forEach(cartao => {
-      secao.container.innerHTML += secao.render(cartao);
-    });
-    botoesAtivados = false;
+  // Limpa conteúdo antigo
+  secao.container.innerHTML = "";
+
+  // Obtém dados (fetch para Saúde ou dados estáticos)
+  let items = [];
+  if (secoes === secoesSaude) {
+    items = await fetchSecao(abaID);
+  } else if (secao.dados) {
+    items = secao.dados;
   }
 
-  if (!botoesAtivados) {
-    botoesDosCartoes();
-  }
+  // Renderiza cartões
+  items.forEach(item => {
+    secao.container.innerHTML += secao.render(item);
+  });
+
+  // Ativa botões
+  botoesAtivados = false;
+  botoesDosCartoes();
 }
 
-// Esssa parte é pra carregar uma seção logo ao entrar na pagina, e também por o click nas abas
+// Prepara ambiente ao entrar na página certa
 function preparaAmbiente() {
   if (window.location.href.includes("PaginaSaude.html")) {
     addClick(secoesSaude);
@@ -184,12 +127,12 @@ function preparaAmbiente() {
   }
 }
 
-// Ativa os botoes dos cartões
+// Ativa eventos dos botões dentro dos cartões
 function botoesDosCartoes() {
+  if (botoesAtivados) return;
+
   const botoes = document.querySelectorAll(".btn-primario");
   const botoesSecundarios = document.querySelectorAll(".btn-secundario");
-
-  if (botoesAtivados) return;
 
   botoes.forEach(botao => {
     botao.addEventListener("click", () => {
@@ -199,33 +142,30 @@ function botoesDosCartoes() {
 
   botoesSecundarios.forEach(botao => {
     botao.addEventListener("click", () => {
-      console.log("Sem funão ainda");
+      console.log("Sem função ainda");
     });
   });
 
   botoesAtivados = true;
 }
 
-// Função que leva para o google maps com o endereço do cartão
+// Abre Google Maps com o endereço do cartão
 function irLocalizacao(botao) {
-  const cartao = botao.parentElement.parentElement; //Pega a div cartão
-  const tagsP = cartao.querySelectorAll("p");       // Pega todas as tags p do cartão
+  const cartao = botao.closest(".cartao");
+  const pTags = cartao.querySelectorAll("p");
 
-  tagsP.forEach(p => {
-    const textoP = p.innerHTML;
-
-    //Se for a tag p certa, recorta dela apenas o texto referente ao endereco
-    if (textoP.includes("Endereço:") || textoP.includes("Locais:")) {
-      const inicio = textoP.indexOf("</strong>") + 9;
-
-      let endereco = textoP.slice(inicio, textoP.length).trim();
-      endereco = `${endereco} em ${nomeCidade}`;
-
-      // Abre o google maps com o endereço
-      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`, "_blank");
+  pTags.forEach(p => {
+    const html = p.innerHTML;
+    if (html.includes("Endereço:") || html.includes("Locais:")) {
+      const texto = html.split('</strong>')[1].trim();
+      const endereco = `${texto} em ${nomeCidade}`;
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`,
+        "_blank"
+      );
     }
   });
 }
 
-
+// Inicialização
 preparaAmbiente();
