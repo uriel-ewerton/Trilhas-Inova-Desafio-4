@@ -1,125 +1,171 @@
-// Js/DadosServicos.js - Refatorado para evitar erros em outras páginas
 const nomeCidade = localStorage.getItem("nomeCidade");
 let botoesAtivados = false;
-let secoes = {};
+let abas = document.querySelectorAll(".aba");
 
-// Busca os dados do backend
+// Função para buscar dados do backend (Netlify Functions)
 async function fetchSecao(type) {
-  const cidade = encodeURIComponent(nomeCidade);
-  const res = await fetch(`/.netlify/functions/getHealthData?type=${type}&cidade=${cidade}`);
+  const cidade = encodeURIComponent(localStorage.getItem("nomeCidade"));
+  const res = await fetch(`/.netlify/functions/getHealthData?type=postos&cidade=${encodeURIComponent(nomeCidade)}`);
   if (!res.ok) throw new Error(`Erro ao buscar dados: ${res.statusText}`);
   return await res.json();
 }
 
-// Função de render para cartões de Saúde
-const renderSaude = {
-  postos: posto => `
-    <div class="cartao">
-      <h3>${posto.nome}</h3>
-      <p><i class="fas fa-calendar-alt"></i><strong> Horário:</strong> ${posto.horario}</p>
-      <p><i class="fas fa-id-card"></i><strong> Documentos:</strong> ${posto.documentos}</p>
-      <p><i class="fas fa-phone"></i><strong> Telefone:</strong> ${posto.telefone}</p>
-      <p><i class="fas fa-map-marker-alt"></i><strong> Endereço:</strong> ${posto.endereco}</p>
-      <div class="acoes">
-        <button class="btn-secundario">Ver em Detalhes</button>
-        <button class="btn-primario">Ver no Mapa</button>
+// Definição das seções de Saúde (render permanece igual)
+const secoesSaude = {
+  postos: {
+    container: document.getElementById("postosMenu"),
+    render: posto => `
+      <div class="cartao">
+        <h3>${posto.nome}</h3>
+        <p><i class="fas fa-calendar-alt"></i><strong> Horário:</strong> ${posto.horario}</p>
+        <p><i class="fas fa-id-card"></i><strong> Documentos:</strong> ${posto.documentos}</p>
+        <p><i class="fas fa-phone"></i><strong> Telefone:</strong> ${posto.telefone}</p>
+        <p><i class="fas fa-map-marker-alt"></i><strong> Endereço:</strong> ${posto.endereco}</p>
+        <div class="acoes">
+          <button class="btn-secundario">Ver em Detalhes</button>
+          <button class="btn-primario">Ver no Mapa</button>
+        </div>
       </div>
-    </div>
-  `,
-  upas: upa => `
-    <div class="cartao">
-      <h3>${upa.nome}</h3>
-      <p><i class="fas fa-calendar-alt"></i><strong> Horário:</strong> ${upa.horario}</p>
-      <p><i class="fas fa-id-card"></i><strong> Documentos:</strong> ${upa.documentos}</p>
-      <p><i class="fas fa-phone"></i><strong> Telefone:</strong> ${upa.telefone}</p>
-      <p><i class="fas fa-map-marker-alt"></i><strong> Endereço:</strong> ${upa.endereco}</p>
-      <div class="acoes">
-        <button class="btn-secundario">Ver em Detalhes</button>
-        <button class="btn-primario">Ver no Mapa</button>
+    `
+  },
+  upas: {
+    container: document.getElementById("upasMenu"),
+    render: upa => `
+      <div class="cartao">
+        <h3>${upa.nome}</h3>
+        <p><i class="fas fa-calendar-alt"></i><strong> Horário:</strong> ${upa.horario}</p>
+        <p><i class="fas fa-id-card"></i><strong> Documentos:</strong> ${upa.documentos}</p>
+        <p><i class="fas fa-phone"></i><strong> Telefone:</strong> ${upa.telefone}</p>
+        <p><i class="fas fa-map-marker-alt"></i><strong> Endereço:</strong> ${upa.endereco}</p>
+        <div class="acoes">
+          <button class="btn-secundario">Ver em Detalhes</button>
+          <button class="btn-primario">Ver no Mapa</button>
+        </div>
       </div>
-    </div>
-  `,
-  campanhas: campanha => `
-    <div class="cartao">
-      <h3>${campanha.titulo}</h3>
-      <p><i class="fas fa-calendar-alt"></i><strong> Horário:</strong> ${campanha.horario}</p>
-      <p><i class="fas fa-clock"></i><strong> Período:</strong> ${campanha.periodo}</p>
-      <p><i class="fas fa-id-card"></i><strong> Documentos:</strong> ${campanha.documentos}</p>
-      <p><i class="fas fa-map-marker-alt"></i><strong> Locais:</strong> ${campanha.locais}</p>
-      <div class="acoes">
-        <button class="btn-secundario">Ver em Detalhes</button>
+    `
+  },
+  campanhas: {
+    container: document.getElementById("campanhasMenu"),
+    render: campanha => `
+      <div class="cartao">
+        <h3>${campanha.titulo}</h3>
+        <p><i class="fas fa-calendar-alt"></i><strong> Horário:</strong> ${campanha.horario}</p>
+        <p><i class="fas fa-clock"></i><strong> Período:</strong> ${campanha.periodo}</p>
+        <p><i class="fas fa-id-card"></i><strong> Documentos:</strong> ${campanha.documentos}</p>
+        <p><i class="fas fa-map-marker-alt"></i><strong> Locais:</strong> ${campanha.locais}</p>
+        <div class="acoes">
+          <button class="btn-secundario">Ver em Detalhes</button>
+        </div>
       </div>
-    </div>
-  `
+    `
+  }
 };
 
-// Adiciona evento de clique nas abas
-function addClick() {
-  const abas = document.querySelectorAll(".aba");
-  abas.forEach(aba => aba.addEventListener("click", async () => {
-    await trocarAba(aba.id);
-  }));
+// Seções estáticas para Educação, Emergência e outros (mantém a estrutura original)
+const secoesEducacao = {};
+const secoesEmergencia = {};
+const secoesAssitenciaSocial = {};
+const secoesServicosPrefeitura = {};
+
+// Adiciona eventos de clique nas abas
+function addClick(secoes) {
+  abas = document.querySelectorAll(".aba");
+  abas.forEach(aba => {
+    aba.addEventListener("click", () => {
+      trocarAba(aba.id, secoes);
+    });
+  });
 }
 
-// Troca de aba e renderização
-async function trocarAba(abaID) {
-  const config = secoes;
-  const abaBtn = document.getElementById(abaID);
-  if (!abaBtn || !config[abaID]) return;
+// Troca a aba ativa e carrega dados (dinâmicos para Saúde)
+async function trocarAba(abaID, secoes) {
+  // Marca aba ativa
+  abas.forEach(aba => aba.classList.remove("ativa"));
+  document.getElementById(abaID).classList.add("ativa");
 
-  // ativa/desativa abas
-  document.querySelectorAll(".aba").forEach(el => el.classList.remove("ativa"));
-  abaBtn.classList.add("ativa");
+  // Esconde todas as seções
+  for (const key in secoes) {
+    secoes[key].container.classList.add("hidden");
+  }
 
-  // esconde todas seções
-  Object.values(config).forEach(sec => sec.container.classList.add("hidden"));
-
-  // mostra a seção atual
-  const secao = config[abaID];
+  // Mostra a seção selecionada
+  const secao = secoes[abaID];
   secao.container.classList.remove("hidden");
 
-  // renderiza conteúdo
+  // Limpa conteúdo antigo
   secao.container.innerHTML = "";
-  const items = await fetchSecao(abaID);
-  items.forEach(item => secao.container.innerHTML += renderSaude[abaID](item));
 
-  // ativa botões dentro dos cartões
+  // Obtém dados (fetch para Saúde ou dados estáticos)
+  let items = [];
+  if (secoes === secoesSaude) {
+    items = await fetchSecao(abaID);
+  } else if (secao.dados) {
+    items = secao.dados;
+  }
+
+  // Renderiza cartões
+  items.forEach(item => {
+    secao.container.innerHTML += secao.render(item);
+  });
+
+  // Ativa botões
   botoesAtivados = false;
   botoesDosCartoes();
 }
 
-// Botões de ações dos cartões
+// Prepara ambiente ao entrar na página certa
+function preparaAmbiente() {
+  if (window.location.href.includes("PaginaSaude.html")) {
+    addClick(secoesSaude);
+    trocarAba("postos", secoesSaude);
+  } else if (window.location.href.includes("Educacao.html")) {
+    addClick(secoesEducacao);
+    trocarAba("matriculas", secoesEducacao);
+  } else {
+    addClick(secoesEmergencia);
+    trocarAba("telefones", secoesEmergencia);
+  }
+}
+
+// Ativa eventos dos botões dentro dos cartões
 function botoesDosCartoes() {
   if (botoesAtivados) return;
-  document.querySelectorAll(".btn-primario").forEach(botao => botao.addEventListener("click", () => irLocalizacao(botao)));
-  document.querySelectorAll(".btn-secundario").forEach(botao => botao.addEventListener("click", () => console.log("Detalhes não implementado")));
+
+  const botoes = document.querySelectorAll(".btn-primario");
+  const botoesSecundarios = document.querySelectorAll(".btn-secundario");
+
+  botoes.forEach(botao => {
+    botao.addEventListener("click", () => {
+      irLocalizacao(botao);
+    });
+  });
+
+  botoesSecundarios.forEach(botao => {
+    botao.addEventListener("click", () => {
+      console.log("Sem função ainda");
+    });
+  });
+
   botoesAtivados = true;
 }
 
-// Abre o Google Maps para o endereço
+// Abre Google Maps com o endereço do cartão
 function irLocalizacao(botao) {
   const cartao = botao.closest(".cartao");
-  const enderecoTag = Array.from(cartao.querySelectorAll("p")).find(p => p.innerHTML.includes("Endereço:") || p.innerHTML.includes("Locais:"));
-  if (!enderecoTag) return;
-  const texto = enderecoTag.innerHTML.split('</strong>')[1].trim();
-  const endereco = `${texto} em ${nomeCidade}`;
-  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`, "_blank");
+  const pTags = cartao.querySelectorAll("p");
+
+  pTags.forEach(p => {
+    const html = p.innerHTML;
+    if (html.includes("Endereço:") || html.includes("Locais:")) {
+      const texto = html.split('</strong>')[1].trim();
+      const endereco = `${texto} em ${nomeCidade}`;
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`,
+        "_blank"
+      );
+    }
+  });
 }
 
-// Inicialização apenas para a página de Saúde
-async function preparaSaude() {
-  // somente em PaginaSaude.html
-  if (!window.location.href.includes("PaginaSaude.html")) return;
-
-  // define containers após DOM carregado
-  secoes = {
-    postos: { container: document.getElementById("postosMenu") },
-    upas: { container: document.getElementById("upasMenu") },
-    campanhas: { container: document.getElementById("campanhasMenu") }
-  };
-
-  addClick();
-  await trocarAba("postos");
-}
-
-preparaSaude();
+// Inicialização
+preparaAmbiente();
