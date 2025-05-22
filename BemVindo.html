@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="Styles/BemVindo.css"/>
-    <script src="../Js/Script.js"></script>
+    <!-- Removido o script que causava o alerta indevido -->
 
     <title>InforMA | Cidadão</title>
 </head>
@@ -21,6 +21,13 @@
 
         <button onclick="redirecionarPara('SelectMunicipio.html')" class="botao">Começar</button>
     </section>
+
+    <!-- Script mínimo apenas para a função de redirecionamento -->
+    <script>
+        function redirecionarPara(paginaHtml) {
+            window.location.href = paginaHtml;
+        }
+    </script>
 </body>
 
 </html>
